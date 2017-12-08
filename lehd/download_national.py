@@ -30,12 +30,12 @@ def pre_clean():
     create_emptydir(zips_dir)
     create_emptydir(csvs_dir)
 
-def main():
-    pre_clean()
+def main(mergeNational=False):
+    #pre_clean()
     #downloading and extracting lodes data by state
     for st in st_list:
         searchyear = year
-        while searchyear>=(year-2):
+        while searchyear>(year-5):
             try:
                 download(st, searchyear)
                 break
@@ -44,20 +44,24 @@ def main():
                 searchyear -= 1
 
     #merging into one national file
-    national_file = open(national_csv,"wb")
-    write_header = False
-    for file_name in listdir(csvs_dir):
-        st_file = join(csvs_dir, file_name)
-        f = open(st_file, 'rb')
-        if write_header:
-            f.readline()
-        else:
-            national_file.write(f.readline())
-            write_header = True
-        copyfileobj(f, national_file)
-        f.close()
-
-    national_file.close()
+    if mergeNational:
+        try:
+            national_file = open(national_csv,"wb")
+            write_header = False
+            for file_name in listdir(csvs_dir):
+                st_file = join(csvs_dir, file_name)
+                f = open(st_file, 'rb')
+                if write_header:
+                    f.readline()
+                else:
+                    national_file.write(f.readline())
+                    write_header = True
+                copyfileobj(f, national_file)
+                f.close()
+        except Exception as e:
+            raise
+        finally:
+            national_file.close()
 
 
 
@@ -90,6 +94,12 @@ def download(st, year):
 
 if __name__ == "__main__":
     try:
+        import cProfile
+        #cProfile.run('main()')
+        pr = cProfile.Profile()
+        pr.enable()
         main()
+        pr.disable()
+        pr.print_stats(sort='time')
     except KeyboardInterrupt:
         pass
